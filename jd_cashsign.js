@@ -40,8 +40,8 @@ if ($.isNode()) {
                 }
                 continue
             }
-            await sign();
-            await $.wait(2000)
+            await wxsign();
+            await $.wait(2000);
         }
     }
 })()
@@ -85,6 +85,49 @@ async function sign() {
             }
         })
     })
+}
+function wxsign() {
+    let body = { "version": "1", "channel": "applet", "remind": 0 };
+    return new Promise(async (resolve) => {
+        $.post(getUrl('cash_mob_sign', body), async (err, resp, data) => {
+            try {
+                if (err) {
+                    console.log(`${JSON.stringify(err)}`)
+                    console.log(` API请求失败，请检查网路重试`)
+                } else {
+                    //console.log(data);
+                    data = JSON.parse(data)
+                    if (data.code == 0) {
+                        if (data.data.bizCode == 0) {
+                            $.log(`签到成功：获得${data.data?.result?.signCash}元！`)
+                        } else {
+                            $.log(`${data.data.bizMsg.includes('已完成') ? "今日已完成签到！" : data.data.bizMsg}`);
+                        }
+                    } else {
+                        console.log(data.msg)
+                    }
+                }
+            } catch (e) {
+                $.logErr(e, resp)
+            } finally {
+                resolve(data)
+            }
+        })
+    })
+}
+function getUrl(fn, body) {
+    return {
+        url: `https://api.m.jd.com/?g_ty=ls&g_tk=616816427`,
+        body: `loginType=2&clientType=wxapp&client=wh5&clientVersion=1.0.0&d_brand=&d_model=&lang=zh_CN&uuid=&appid=signed_mp&t=${Date.now}&functionId=${fn}&body=${encodeURIComponent(JSON.stringify(body))}&loginWQBiz=pet-town&h5st=20230428215402232%3B8517094924558639%3Bc8815%3Btk02a8bf41be318pMXgzMWdxUk9FzVTwIa1Y5BN3GYXDFTCU37w9xPVffVC32ViGDe33QLt8JhzryaMoLDnWAMtJulav%3Ba339ec95c0fbabca4fd585fcfce78090d8bbe2672806805600cde4d8bc142ec3%3B3.1%3B1682690042232%3B4a21f21f3b5dd7c0338578afd557db584a2d1619854d3e9c4d89d2beb1b1333d9f6d38da5567917561654a3437b4c71a`,
+        headers: {
+            'Host': 'api.m.jd.com',
+            //'Origin': 'https://h5.m.jd.com',
+            'Referer': 'https://servicewechat.com/wx91d27dbf599dff74/706/page-frame.html',
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': $.UA,
+            'Cookie': cookie
+        }
+    }
 }
 
 function TotalBean() {
